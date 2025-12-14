@@ -1,11 +1,25 @@
-const addBtn = document.getElementById('add');
-const notes = JSON.parse(localStorage.getItem('notes'))
-
-if(notes){
-  notes.forEach(note => addNewNote(note));
+async function waitForMarked() {
+  while (typeof marked !== 'function' && typeof marked.marked !== 'function') {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  const markdownParser = typeof marked === 'function' ? marked : marked.marked;
+  return markdownParser;
 }
 
-addBtn.addEventListener('click', () => addNewNote());
+let markdownParser;
+
+waitForMarked().then(parser => {
+  markdownParser = parser;
+  
+  const addBtn = document.getElementById('add');
+  const notes = JSON.parse(localStorage.getItem('notes'))
+
+  if(notes){
+    notes.forEach(note => addNewNote(note));
+  }
+
+  addBtn.addEventListener('click', () => addNewNote());
+});
 
 function addNewNote(text = '') {
   const note = document.createElement('div');
@@ -24,7 +38,7 @@ function addNewNote(text = '') {
   const textArea = note.querySelector('textarea');
 
   textArea.value = text;
-  main.innerHTML = text;
+  main.innerHTML = markdownParser(text);
 
   deleteBtn.addEventListener('click', () => {
     note.remove();
@@ -38,7 +52,7 @@ function addNewNote(text = '') {
 
   textArea.addEventListener('input', (e) => {
     const { value } = e.target;
-    main.innerHTML = value;
+    main.innerHTML = markdownParser(value);
     updateLs();
   })
 
